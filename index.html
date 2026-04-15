@@ -116,7 +116,7 @@ main { max-width: 900px; margin: 0 auto; padding: 24px 20px 60px; display: flex;
 input[type=number] { width: 88px; }
 
 /* ── IO ── */
-.io-grid { display: grid; grid-template-columns: 1fr 96px 1fr; gap: 12px; align-items: start; }
+.io-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: start; }
 .io-col { display: flex; flex-direction: column; gap: 6px; }
 .io-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 textarea {
@@ -138,7 +138,7 @@ textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--adim);
 textarea[readonly] { opacity: .85; cursor: default; }
 
 /* ── Mid buttons ── */
-.io-mid { display: flex; flex-direction: column; gap: 8px; justify-content: center; padding-top: 22px; }
+.io-mid { display: flex; flex-direction: column; gap: 8px; justify-content: center; padding-top: 22px; min-width: 140px; }
 .btn {
   padding: 9px 14px;
   border-radius: 7px;
@@ -177,9 +177,10 @@ textarea[readonly] { opacity: .85; cursor: default; }
     <span id="app-title"></span>
   </div>
   <div class="ui-langs">
-    <button id="ui-ru" onclick="setUiLang('ru')">RU</button>
-    <button id="ui-kz" onclick="setUiLang('kz')">KZ</button>
-    <button id="ui-en" onclick="setUiLang('en')">EN</button>
+    <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-right:4px;align-self:center">Язык шифра</span>
+    <button id="ui-ru" onclick="setTLang('ru')">RU</button>
+    <button id="ui-kz" onclick="setTLang('kz')">KZ</button>
+    <button id="ui-en" onclick="setTLang('en')">EN</button>
   </div>
 </header>
 
@@ -193,14 +194,6 @@ textarea[readonly] { opacity: .85; cursor: default; }
 
   <div class="card">
     <div class="ctrl-row">
-      <div class="field">
-        <label id="lbl-tlang"></label>
-        <select id="sel-lang" onchange="tLang=this.value">
-          <option value="ru" id="opt-ru"></option>
-          <option value="kz" id="opt-kz"></option>
-          <option value="en" id="opt-en"></option>
-        </select>
-      </div>
       <div class="field" id="g-shift">
         <label id="lbl-shift"></label>
         <input type="number" id="in-shift" min="1" max="50" value="3">
@@ -323,7 +316,8 @@ const T = {
 };
 
 // ─── State ───────────────────────────────────────────────────────────────────
-let uiL = 'ru', cipher = 'caesar', tLang = 'ru';
+let cipher = 'caesar', tLang = 'ru';
+const uiL = 'ru'; // UI always in Russian
 
 // ─── Cipher helpers ──────────────────────────────────────────────────────────
 const shiftCh = (ch, n, a) => {
@@ -481,11 +475,12 @@ function setCipher(id){
   updateCipherPanel();
 }
 
-function setUiLang(l){
-  uiL=l;
+function setTLang(l){
+  tLang=l;
   ['ru','kz','en'].forEach(x=>$('ui-'+x).classList.toggle('active',x===l));
-  render();
 }
+
+function setUiLang(l){ setTLang(l); } // kept for compat
 
 function updateCipherPanel(){
   const t=T[uiL];
@@ -499,10 +494,9 @@ function updateCipherPanel(){
 }
 
 function render(){
-  const t=T[uiL];
+  const t=T.ru;
   $('app-title').textContent = t.title;
   document.title = t.title;
-  $('lbl-tlang').textContent = t.tLang;
   $('lbl-shift').textContent = t.shift;
   $('lbl-kw').textContent    = t.kw;
   $('lbl-dg').textContent    = t.dg;
@@ -511,9 +505,6 @@ function render(){
   $('btn-enc').textContent   = t.enc;
   $('btn-dec').textContent   = t.dec;
   $('btn-copy').textContent  = t.copy;
-  $('opt-ru').textContent    = t.ru;
-  $('opt-kz').textContent    = t.kz;
-  $('opt-en').textContent    = t.en;
   document.querySelectorAll('.ctab').forEach(b=>{b.textContent=t.names[b.dataset.id];});
   updateCipherPanel();
 }
@@ -528,7 +519,8 @@ window.onload = () => {
     b.onclick=()=>setCipher(id);
     nav.appendChild(b);
   });
-  setUiLang('ru');
+  render();
+  setTLang('ru');
 };
 </script>
 </body>
