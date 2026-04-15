@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шифровальщик</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0d1117;
+  --s1:       #161b22;
+  --s2:       #21262d;
+  --border:   #30363d;
+  --text:     #e6edf3;
+  --muted:    #8b949e;
+  --accent:   #58a6ff;
+  --adim:     rgba(88,166,255,.15);
+  --green:    #3fb950;
+  --red:      #f85149;
+  --sans:     'Outfit', sans-serif;
+  --mono:     'IBM Plex Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; }
+
+/* ── Header ── */
+header {
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; letter-spacing: .01em; }
+.logo-icon { font-size: 20px; }
+.ui-langs { display: flex; gap: 6px; }
+.ui-langs button {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: .05em;
+  transition: all .15s;
+}
+.ui-langs button:hover { border-color: var(--accent); color: var(--accent); }
+.ui-langs button.active { background: var(--accent); border-color: var(--accent); color: #0d1117; }
+
+/* ── Cipher tabs ── */
+nav {
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 2px;
+}
+nav::-webkit-scrollbar { display: none; }
+.ctab {
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color .15s;
+}
+.ctab:hover { color: var(--text); }
+.ctab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── Main ── */
+main { max-width: 900px; margin: 0 auto; padding: 24px 20px 60px; display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Cards ── */
+.card { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+
+/* ── Description ── */
+.desc-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+.desc-text { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+/* ── Controls ── */
+.ctrl-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; margin-bottom: 20px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.field select,
+.field input[type=text],
+.field input[type=number] {
+  padding: 8px 10px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .15s;
+}
+.field select:focus,
+.field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--adim); }
+.field select option { background: var(--s2); }
+input[type=number] { width: 88px; }
+
+/* ── IO ── */
+.io-grid { display: grid; grid-template-columns: 1fr 96px 1fr; gap: 12px; align-items: start; }
+.io-col { display: flex; flex-direction: column; gap: 6px; }
+.io-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+textarea {
+  width: 100%;
+  height: 130px;
+  padding: 11px 13px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition: border-color .15s;
+}
+textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--adim); }
+textarea[readonly] { opacity: .85; cursor: default; }
+
+/* ── Mid buttons ── */
+.io-mid { display: flex; flex-direction: column; gap: 8px; justify-content: center; padding-top: 22px; }
+.btn {
+  padding: 9px 14px;
+  border-radius: 7px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .15s;
+  text-align: center;
+  white-space: nowrap;
+}
+.btn-blue { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+.btn-blue:hover { opacity: .88; }
+.btn-ghost { background: transparent; color: var(--muted); border-color: var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* ── Output footer ── */
+.out-footer { display: flex; justify-content: flex-end; }
+.err { font-size: 12px; color: var(--red); min-height: 18px; margin-top: 8px; font-family: var(--mono); }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .io-grid { grid-template-columns: 1fr; }
+  .io-mid { flex-direction: row; padding-top: 0; justify-content: stretch; }
+  .io-mid .btn { flex: 1; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-icon">🔐</span>
+    <span id="app-title"></span>
+  </div>
+  <div class="ui-langs">
+    <button id="ui-ru" onclick="setUiLang('ru')">RU</button>
+    <button id="ui-kz" onclick="setUiLang('kz')">KZ</button>
+    <button id="ui-en" onclick="setUiLang('en')">EN</button>
+  </div>
+</header>
+
+<nav id="ctabs"></nav>
+
+<main>
+  <div class="card">
+    <div class="desc-title" id="c-name"></div>
+    <div class="desc-text"  id="c-desc"></div>
+  </div>
+
+  <div class="card">
+    <div class="ctrl-row">
+      <div class="field">
+        <label id="lbl-tlang"></label>
+        <select id="sel-lang" onchange="tLang=this.value">
+          <option value="ru" id="opt-ru"></option>
+          <option value="kz" id="opt-kz"></option>
+          <option value="en" id="opt-en"></option>
+        </select>
+      </div>
+      <div class="field" id="g-shift">
+        <label id="lbl-shift"></label>
+        <input type="number" id="in-shift" min="1" max="50" value="3">
+      </div>
+      <div class="field" id="g-kw">
+        <label id="lbl-kw"></label>
+        <input type="text" id="in-kw" style="width:180px">
+      </div>
+      <div class="field" id="g-dg">
+        <label id="lbl-dg"></label>
+        <input type="text" id="in-dg" style="width:150px" placeholder="12345">
+      </div>
+    </div>
+
+    <div class="io-grid">
+      <div class="io-col">
+        <div class="io-lbl" id="lbl-in"></div>
+        <textarea id="tx-in" id="tx-in"></textarea>
+      </div>
+      <div class="io-mid">
+        <button class="btn btn-blue" id="btn-enc" onclick="run('enc')"></button>
+        <button class="btn btn-ghost" id="btn-dec" onclick="run('dec')"></button>
+        <button class="btn btn-ghost btn-sm" onclick="swapIO()" title="swap">⇄</button>
+      </div>
+      <div class="io-col">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="io-lbl" id="lbl-out"></div>
+          <button class="btn btn-ghost btn-sm" id="btn-copy" onclick="copyOut()"></button>
+        </div>
+        <textarea id="tx-out" readonly></textarea>
+      </div>
+    </div>
+    <div class="err" id="err"></div>
+  </div>
+</main>
+
+<script>
+// ─── Alphabets ───────────────────────────────────────────────────────────────
+const ALPHA = {
+  ru: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ',
+  en: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+  kz: 'АӘБВГҒДЕЁЖЗИЙКҚЛМНҢОӨПРСТУҰҮФХҺЦЧШЩЪЫІЬЭЮЯ'
+};
+// Polybius grids
+const POLY = {
+  ru: { a: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', c: 6 },
+  en: { a: 'ABCDEFGHIKLMNOPQRSTUVWXYZ',          c: 5 },
+  kz: { a: 'АӘБВГҒДЕЁЖЗИЙКҚЛМНҢОӨПРСТУҰҮФХҺЦЧШЩЪЫІЬЭЮЯ', c: 6 }
+};
+// Playfair grids (reduced alphabets)
+const PF = {
+  ru: { a: 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЫЬЭЮЯ', c: 6, f: 'Х' }, // 30 letters, 5×6
+  en: { a: 'ABCDEFGHIKLMNOPQRSTUVWXYZ',       c: 5, f: 'X' }, // 25 letters, 5×5
+  kz: { a: 'АӘБВГҒДЕЁЖЗИЙКҚЛМНҢОӨПРСТУҰҮФХҺЦЧШЩЪЫІЬЭЮЯ', c: 6, f: 'Х' } // 42, 7×6
+};
+const CIPHERS = ['caesar','vigenere','bacon','atbash','gronsfeld','polybius','playfair'];
+
+// ─── i18n ────────────────────────────────────────────────────────────────────
+const T = {
+  ru: {
+    title:'Шифровальщик', tLang:'Язык текста', shift:'Сдвиг',
+    kw:'Ключевое слово', dg:'Цифровой ключ', inLbl:'Открытый текст',
+    outLbl:'Шифртекст', enc:'Зашифровать', dec:'Расшифровать',
+    copy:'Копировать', copied:'Скопировано!',
+    ru:'Русский', kz:'Казахский', en:'Английский',
+    eKey:'Введите ключ', eText:'Введите текст',
+    names:{ caesar:'Шифр Цезаря', vigenere:'Шифр Виженера', bacon:'Шифр Бэкона',
+            atbash:'Шифр Атбаша', gronsfeld:'Шифр Гронсфельда',
+            polybius:'Квадрат Полибия', playfair:'Шифр Плейфера' },
+    descs:{
+      caesar:   'Каждая буква сдвигается на N позиций в алфавите. При сдвиге 3: А→Г, Б→Д. Ключ — целое число. Буквы не из выбранного алфавита передаются без изменений.',
+      vigenere: 'Ключевое слово задаёт разные сдвиги для каждой буквы. А ключа = сдвиг 0, Б = 1, В = 2 и т.д. Ключ должен состоять из букв выбранного алфавита и повторяется по кругу.',
+      bacon:    'Каждая буква кодируется последовательностью символов A и B: А=ААААА, Б=ААААB (5 или 6 знаков в зависимости от алфавита). При расшифровке вставьте закодированный текст — символы группируются автоматически.',
+      atbash:   'Первая буква заменяется последней, вторая — предпоследней и т.д. Ключ не нужен, шифр симметричен: та же кнопка шифрует и расшифровывает.',
+      gronsfeld:'Аналог шифра Виженера, но ключ — строка цифр от 0 до 9. Каждая цифра задаёт сдвиг для соответствующей буквы текста. Ключ повторяется.',
+      polybius: 'Буквы размещаются в таблице (6×6 для русского, 5×5 для английского, 7×6 для казахского). Каждая буква кодируется двумя цифрами: строка и столбец. Например, А=11. При расшифровке введите последовательность цифр.',
+      playfair: 'Ключевое слово строит таблицу (без повторяющихся букв, остаток алфавита в порядке). Текст делится на пары букв (биграммы): одна строка → сдвиг вправо; один столбец → сдвиг вниз; прямоугольник → обмен столбцами. Русский: без Ё, Ъ, Й. Английский: I=J.'
+    }
+  },
+  en: {
+    title:'Cipher Tool', tLang:'Text language', shift:'Shift',
+    kw:'Keyword', dg:'Digit key', inLbl:'Plaintext',
+    outLbl:'Ciphertext', enc:'Encrypt', dec:'Decrypt',
+    copy:'Copy', copied:'Copied!',
+    ru:'Russian', kz:'Kazakh', en:'English',
+    eKey:'Enter a key', eText:'Enter text',
+    names:{ caesar:'Caesar cipher', vigenere:'Vigenere cipher', bacon:'Bacon cipher',
+            atbash:'Atbash cipher', gronsfeld:'Gronsfeld cipher',
+            polybius:'Polybius square', playfair:'Playfair cipher' },
+    descs:{
+      caesar:   'Each letter shifts N positions in the alphabet. With shift 3: A→D, B→E. Key is an integer. Characters outside the selected alphabet pass through unchanged.',
+      vigenere: 'A keyword sets a different shift for each letter. Key letter A=shift 0, B=1, C=2, etc. The key must use letters from the chosen alphabet and repeats cyclically.',
+      bacon:    'Each letter is encoded as a sequence of A/B characters: A=AAAAA, B=AAAAB (5 or 6 chars depending on alphabet size). To decrypt, paste the encoded text — groups are parsed automatically.',
+      atbash:   'The first letter swaps with the last, the second with the second-to-last, and so on. No key needed. The cipher is symmetric: the same button both encrypts and decrypts.',
+      gronsfeld:'Like Vigenere but the key is a string of digits 0–9. Each digit defines the shift for the corresponding letter. The key repeats cyclically.',
+      polybius: 'Letters fill a grid (6×6 Russian, 5×5 English, 7×6 Kazakh). Each letter is encoded as two digits: row and column. E.g. A=11. For decryption, enter the digit sequence.',
+      playfair: 'A keyword builds a table (no duplicate letters, remaining alphabet appended). Text is split into bigrams: same row → shift right; same column → shift down; rectangle → swap columns. English: I=J. For decryption, enter the ciphertext.'
+    }
+  },
+  kz: {
+    title:'Шифрлауыш', tLang:'Мәтін тілі', shift:'Ығысу',
+    kw:'Кілттік сөз', dg:'Сандық кілт', inLbl:'Ашық мәтін',
+    outLbl:'Шифрмәтін', enc:'Шифрлау', dec:'Шешу',
+    copy:'Көшіру', copied:'Көшірілді!',
+    ru:'Орысша', kz:'Қазақша', en:'Ағылшынша',
+    eKey:'Кілтті енгізіңіз', eText:'Мәтінді енгізіңіз',
+    names:{ caesar:'Цезарь шифры', vigenere:'Виженер шифры', bacon:'Бэкон шифры',
+            atbash:'Атбаш шифры', gronsfeld:'Гронсфельд шифры',
+            polybius:'Полибий квадраты', playfair:'Плейфер шифры' },
+    descs:{
+      caesar:   'Әр әріп алфавитте N орынға жылжытылады. 3 ығысу: А→Д, Ә→Е. Кілт — бүтін сан. Таңдалған алфавиттен тыс таңбалар өзгеріссіз өтеді.',
+      vigenere: 'Кілттік сөз әр әріпке ығысу мәнін береді. Кілт әрпі А=0, Ә=1, Б=2 т.б. Кілт таңдалған алфавит әріптерінен тұруы тиіс және дөңгелек бойынша қайталанады.',
+      bacon:    'Әр әріп A және B таңбаларының тізбегімен кодталады: А=ААААА, Ә=ААААВ (5 немесе 6 таңба). Шешу үшін кодталған мәтінді жазыңыз — топтар автоматты анықталады.',
+      atbash:   'Бірінші әріп соңғысымен, екінші екінші соңғысымен ауыстырылады. Кілт қажет емес. Шифр симметриялы: сол батырма шифрлайды да, шешеді де.',
+      gronsfeld:'Виженер шифрі сияқты, бірақ кілт — 0-9 сандар жолы. Әр сан тиісті әріптің ығысуын анықтайды. Кілт қайталанады.',
+      polybius: 'Әріптер кестеге орналасады (орысша 6×6, ағылшынша 5×5, қазақша 7×6). Әр әріп екі санмен кодталады: қатар және баған. Мыс. А=11. Шешу үшін сандар тізбегін енгізіңіз.',
+      playfair: 'Кілттік сөз кесте құрады. Мәтін жұптарға бөлінеді: бір қатар → оңға ығысу; бір баған → төмен ығысу; тіктөртбұрыш → бағандармен алмасу. Орысша: Ё, Ъ, Й жоқ. Ағылшынша: I=J.'
+    }
+  }
+};
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let uiL = 'ru', cipher = 'caesar', tLang = 'ru';
+
+// ─── Cipher helpers ──────────────────────────────────────────────────────────
+const shiftCh = (ch, n, a) => {
+  const up = ch.toUpperCase(), i = a.indexOf(up);
+  if (i < 0) return ch;
+  const e = a[((i+n)%a.length+a.length)%a.length];
+  return ch === up ? e : e.toLowerCase();
+};
+
+// Caesar
+const caesarE = (t,n,l) => [...t].map(c=>shiftCh(c,+n,ALPHA[l])).join('');
+const caesarD = (t,n,l) => caesarE(t,-n,l);
+
+// Atbash (symmetric)
+const atbash = (t,l) => {
+  const a=ALPHA[l], n=a.length;
+  return [...t].map(c=>{const up=c.toUpperCase(),i=a.indexOf(up);if(i<0)return c;const e=a[n-1-i];return c===up?e:e.toLowerCase();}).join('');
+};
+
+// Vigenere
+const vigenereOp = (t,k,l,d) => {
+  const a=ALPHA[l], kl=[...k.toUpperCase()].filter(c=>a.includes(c));
+  if(!kl.length)return t; let ki=0;
+  return [...t].map(c=>{const up=c.toUpperCase();if(!a.includes(up))return c;const s=d*a.indexOf(kl[ki++%kl.length]);return shiftCh(c,s,a);}).join('');
+};
+const vigenereE = (t,k,l) => vigenereOp(t,k,l,1);
+const vigenereD = (t,k,l) => vigenereOp(t,k,l,-1);
+
+// Gronsfeld
+const gronsfeldOp = (t,k,l,d) => {
+  const a=ALPHA[l], dg=k.replace(/\D/g,'');
+  if(!dg)return t; let ki=0;
+  return [...t].map(c=>{const up=c.toUpperCase();if(!a.includes(up))return c;const s=d*+dg[ki++%dg.length];return shiftCh(c,s,a);}).join('');
+};
+const gronsfeldE = (t,k,l) => gronsfeldOp(t,k,l,1);
+const gronsfeldD = (t,k,l) => gronsfeldOp(t,k,l,-1);
+
+// Bacon
+const baconE = (t,l) => {
+  const a=ALPHA[l], b=a.length<=32?5:6;
+  return [...t.toUpperCase()].map(c=>{
+    if(c===' ')return '/';
+    const i=a.indexOf(c); if(i<0)return c;
+    return i.toString(2).padStart(b,'0').replace(/0/g,'A').replace(/1/g,'B');
+  }).join(' ');
+};
+const baconD = (t,l) => {
+  const a=ALPHA[l], b=a.length<=32?5:6;
+  return t.toUpperCase().split(/\s+/).map(tok=>{
+    if(tok==='/')return ' ';
+    if(tok.length===b&&/^[AB]+$/.test(tok)){const i=parseInt(tok.replace(/A/g,'0').replace(/B/g,'1'),2);return i<a.length?a[i]:'?';}
+    return '';
+  }).join('');
+};
+
+// Polybius
+const polyE = (t,l) => {
+  const {a,c}=POLY[l];
+  return [...t.toUpperCase()].map(ch=>{
+    let x=ch; if(l==='en'&&x==='J')x='I'; if(x===' ')return ' ';
+    const i=a.indexOf(x); if(i<0)return x;
+    return `${Math.floor(i/c)+1}${i%c+1}`;
+  }).join(' ');
+};
+const polyD = (t,l) => {
+  const {a,c}=POLY[l];
+  const pairs=(t.replace(/[^0-9]/g,'')).match(/.{2}/g)||[];
+  return pairs.map(p=>{const r=+p[0]-1,col=+p[1]-1,i=r*c+col;return i>=0&&i<a.length?a[i]:'?';}).join('');
+};
+
+// Playfair
+const pfGrid = (kw,l) => {
+  const {a,c}=PF[l], al=[...a], seen=[];
+  for(const ch of kw.toUpperCase())if(al.includes(ch)&&!seen.includes(ch))seen.push(ch);
+  for(const ch of al)if(!seen.includes(ch))seen.push(ch);
+  const rows=Math.floor(seen.length/c);
+  const pos={};
+  seen.forEach((ch,i)=>pos[ch]=[Math.floor(i/c),i%c]);
+  return {flat:seen,rows,c,pos};
+};
+const pfOp = (t,kw,l,d) => {
+  const {a,f}=PF[l], {flat,rows,c,pos}=pfGrid(kw,l);
+  let letters=[...t.toUpperCase()].filter(ch=>a.includes(ch));
+  if(l==='en')letters=letters.map(ch=>ch==='J'?'I':ch);
+  const bg=[]; let i=0;
+  while(i<letters.length){
+    const x=letters[i];
+    if(i+1>=letters.length){bg.push([x,f]);i++;}
+    else if(letters[i]===letters[i+1]){bg.push([x,f]);i++;}
+    else{bg.push([x,letters[i+1]]);i+=2;}
+  }
+  return bg.map(([a2,b2])=>{
+    if(!pos[a2]||!pos[b2])return'??';
+    const[ra,ca]=pos[a2],[rb,cb]=pos[b2];
+    let ea,eb;
+    if(ra===rb){ea=flat[ra*c+((ca+d+c)%c)];eb=flat[rb*c+((cb+d+c)%c)];}
+    else if(ca===cb){ea=flat[((ra+d+rows)%rows)*c+ca];eb=flat[((rb+d+rows)%rows)*c+cb];}
+    else{ea=flat[ra*c+cb];eb=flat[rb*c+ca];}
+    return(ea||'?')+(eb||'?');
+  }).join('');
+};
+const playfairE = (t,k,l) => pfOp(t,k,l,1);
+const playfairD = (t,k,l) => pfOp(t,k,l,-1);
+
+// ─── Run ─────────────────────────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const kw = () => $('in-kw').value.trim();
+const dg = () => $('in-dg').value.trim();
+const sh = () => +$('in-shift').value||3;
+const tx = () => $('tx-in').value;
+const setOut = v => $('tx-out').value = v;
+const setErr = m => $('err').textContent = m||'';
+
+function validate(){
+  const t=T[uiL];
+  if(!tx().trim()){setErr(t.eText);return false;}
+  if(['vigenere','playfair'].includes(cipher)&&!kw()){setErr(t.eKey);return false;}
+  if(cipher==='gronsfeld'&&!dg()){setErr(t.eKey);return false;}
+  setErr(''); return true;
+}
+
+function run(mode){
+  if(!validate())return;
+  const t=tx(),l=tLang;
+  const map={
+    caesar:    [()=>caesarE(t,sh(),l),()=>caesarD(t,sh(),l)],
+    atbash:    [()=>atbash(t,l),      ()=>atbash(t,l)],
+    vigenere:  [()=>vigenereE(t,kw(),l),()=>vigenereD(t,kw(),l)],
+    gronsfeld: [()=>gronsfeldE(t,dg(),l),()=>gronsfeldD(t,dg(),l)],
+    bacon:     [()=>baconE(t,l),      ()=>baconD(t,l)],
+    polybius:  [()=>polyE(t,l),       ()=>polyD(t,l)],
+    playfair:  [()=>playfairE(t,kw(),l),()=>playfairD(t,kw(),l)]
+  };
+  setOut(map[cipher][mode==='enc'?0:1]());
+}
+
+function swapIO(){
+  const a=$('tx-in').value, b=$('tx-out').value;
+  $('tx-in').value=b; $('tx-out').value=a;
+}
+
+function copyOut(){
+  const v=$('tx-out').value; if(!v)return;
+  navigator.clipboard.writeText(v).then(()=>{
+    const btn=$('btn-copy'), orig=btn.textContent;
+    btn.textContent=T[uiL].copied;
+    setTimeout(()=>btn.textContent=orig,1500);
+  });
+}
+
+// ─── UI ──────────────────────────────────────────────────────────────────────
+function setCipher(id){
+  cipher=id;
+  document.querySelectorAll('.ctab').forEach(b=>b.classList.toggle('active',b.dataset.id===id));
+  updateCipherPanel();
+}
+
+function setUiLang(l){
+  uiL=l;
+  ['ru','kz','en'].forEach(x=>$('ui-'+x).classList.toggle('active',x===l));
+  render();
+}
+
+function updateCipherPanel(){
+  const t=T[uiL];
+  $('c-name').textContent = t.names[cipher];
+  $('c-desc').textContent = t.descs[cipher];
+  const gs=$('g-shift'), gk=$('g-kw'), gd=$('g-dg');
+  gs.style.display = cipher==='caesar'    ? '':'none';
+  gk.style.display = ['vigenere','playfair'].includes(cipher) ? '':'none';
+  gd.style.display = cipher==='gronsfeld' ? '':'none';
+  setErr('');
+}
+
+function render(){
+  const t=T[uiL];
+  $('app-title').textContent = t.title;
+  document.title = t.title;
+  $('lbl-tlang').textContent = t.tLang;
+  $('lbl-shift').textContent = t.shift;
+  $('lbl-kw').textContent    = t.kw;
+  $('lbl-dg').textContent    = t.dg;
+  $('lbl-in').textContent    = t.inLbl;
+  $('lbl-out').textContent   = t.outLbl;
+  $('btn-enc').textContent   = t.enc;
+  $('btn-dec').textContent   = t.dec;
+  $('btn-copy').textContent  = t.copy;
+  $('opt-ru').textContent    = t.ru;
+  $('opt-kz').textContent    = t.kz;
+  $('opt-en').textContent    = t.en;
+  document.querySelectorAll('.ctab').forEach(b=>{b.textContent=t.names[b.dataset.id];});
+  updateCipherPanel();
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+window.onload = () => {
+  const nav = $('ctabs');
+  CIPHERS.forEach(id=>{
+    const b=document.createElement('button');
+    b.className='ctab'+(id===cipher?' active':'');
+    b.dataset.id=id;
+    b.onclick=()=>setCipher(id);
+    nav.appendChild(b);
+  });
+  setUiLang('ru');
+};
+</script>
+</body>
+</html>
