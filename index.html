@@ -249,7 +249,7 @@ const PF = {
   en: { a: 'ABCDEFGHIKLMNOPQRSTUVWXYZ',       c: 5, f: 'X' }, // 25 letters, 5×5
   kz: { a: 'АӘБВГҒДЕЁЖЗИЙКҚЛМНҢОӨПРСТУҰҮФХҺЦЧШЩЪЫІЬЭЮЯ', c: 6, f: 'Х' } // 42, 7×6
 };
-const CIPHERS = ['caesar','vigenere','bacon','atbash','gronsfeld','polybius','playfair'];
+const CIPHERS = ['caesar','vigenere','bacon','atbash','gronsfeld','polybius','playfair','ascii','koi8','morse'];
 
 // ─── i18n ────────────────────────────────────────────────────────────────────
 const T = {
@@ -262,7 +262,8 @@ const T = {
     eKey:'Введите ключ', eText:'Введите текст',
     names:{ caesar:'Шифр Цезаря', vigenere:'Шифр Виженера', bacon:'Шифр Бэкона',
             atbash:'Шифр Атбаша', gronsfeld:'Шифр Гронсфельда',
-            polybius:'Квадрат Полибия', playfair:'Шифр Плейфера' },
+            polybius:'Квадрат Полибия', playfair:'Шифр Плейфера',
+            ascii:'Таблица ASCII', koi8:'Кодовая страница KOI8', morse:'Азбука Морзе' },
     descs:{
       caesar:   'Каждая буква сдвигается на N позиций в алфавите. При сдвиге 3: А→Г, Б→Д. Ключ — целое число. Буквы не из выбранного алфавита передаются без изменений.',
       vigenere: 'Ключевое слово задаёт разные сдвиги для каждой буквы. А ключа = сдвиг 0, Б = 1, В = 2 и т.д. Ключ должен состоять из букв выбранного алфавита и повторяется по кругу.',
@@ -270,7 +271,10 @@ const T = {
       atbash:   'Первая буква заменяется последней, вторая — предпоследней и т.д. Ключ не нужен, шифр симметричен: та же кнопка шифрует и расшифровывает.',
       gronsfeld:'Аналог шифра Виженера, но ключ — строка цифр от 0 до 9. Каждая цифра задаёт сдвиг для соответствующей буквы текста. Ключ повторяется.',
       polybius: 'Буквы размещаются в таблице (6×6 для русского, 5×5 для английского, 7×6 для казахского). Каждая буква кодируется двумя цифрами: строка и столбец. Например, А=11. При расшифровке введите последовательность цифр.',
-      playfair: 'Ключевое слово строит таблицу (без повторяющихся букв, остаток алфавита в порядке). Текст делится на пары букв (биграммы): одна строка → сдвиг вправо; один столбец → сдвиг вниз; прямоугольник → обмен столбцами. Русский: без Ё, Ъ, Й. Английский: I=J.'
+      playfair: 'Ключевое слово строит таблицу (без повторяющихся букв, остаток алфавита в порядке). Текст делится на пары букв (биграммы): одна строка → сдвиг вправо; один столбец → сдвиг вниз; прямоугольник → обмен столбцами. Русский: без Ё, Ъ, Й. Английский: I=J.',
+      ascii:    'Каждый символ преобразуется в его десятичный код Unicode (совместим с ASCII для латиницы и стандартных знаков). Кодирование: текст → числа через пробел. Декодирование: числа через пробел → текст.',
+      koi8:     'KOI8-R — советская кодировка кириллицы (RFC 1489). Русские буквы занимают байты 0xC0–0xFF. Остальные символы кодируются как ASCII. Результат выводится в шестнадцатеричном формате (hex) через пробел.',
+      morse:    'Каждая буква и цифра кодируются точками (·) и тире (–). Знаки разделяются пробелом, слова — символом /. При выборе RU/KZ используется русская таблица Морзе, при EN — международная латинская.'
     }
   },
   en: {
@@ -282,7 +286,8 @@ const T = {
     eKey:'Enter a key', eText:'Enter text',
     names:{ caesar:'Caesar cipher', vigenere:'Vigenere cipher', bacon:'Bacon cipher',
             atbash:'Atbash cipher', gronsfeld:'Gronsfeld cipher',
-            polybius:'Polybius square', playfair:'Playfair cipher' },
+            polybius:'Polybius square', playfair:'Playfair cipher',
+            ascii:'ASCII table', koi8:'KOI8 code page', morse:'Morse code' },
     descs:{
       caesar:   'Each letter shifts N positions in the alphabet. With shift 3: A→D, B→E. Key is an integer. Characters outside the selected alphabet pass through unchanged.',
       vigenere: 'A keyword sets a different shift for each letter. Key letter A=shift 0, B=1, C=2, etc. The key must use letters from the chosen alphabet and repeats cyclically.',
@@ -290,7 +295,10 @@ const T = {
       atbash:   'The first letter swaps with the last, the second with the second-to-last, and so on. No key needed. The cipher is symmetric: the same button both encrypts and decrypts.',
       gronsfeld:'Like Vigenere but the key is a string of digits 0–9. Each digit defines the shift for the corresponding letter. The key repeats cyclically.',
       polybius: 'Letters fill a grid (6×6 Russian, 5×5 English, 7×6 Kazakh). Each letter is encoded as two digits: row and column. E.g. A=11. For decryption, enter the digit sequence.',
-      playfair: 'A keyword builds a table (no duplicate letters, remaining alphabet appended). Text is split into bigrams: same row → shift right; same column → shift down; rectangle → swap columns. English: I=J. For decryption, enter the ciphertext.'
+      playfair: 'A keyword builds a table (no duplicate letters, remaining alphabet appended). Text is split into bigrams: same row → shift right; same column → shift down; rectangle → swap columns. English: I=J. For decryption, enter the ciphertext.',
+      ascii:    'Each character is converted to its decimal Unicode code point (compatible with ASCII for Latin and standard symbols). Encode: text → space-separated numbers. Decode: space-separated numbers → text.',
+      koi8:     'KOI8-R is a Soviet Cyrillic encoding (RFC 1489). Russian letters occupy bytes 0xC0–0xFF. Other characters are encoded as ASCII. Output is shown as hex values separated by spaces.',
+      morse:    'Each letter and digit is encoded with dots (·) and dashes (–). Characters are separated by spaces, words by /. RU/KZ uses the Russian Morse table; EN uses the international Latin table.'
     }
   },
   kz: {
@@ -302,7 +310,8 @@ const T = {
     eKey:'Кілтті енгізіңіз', eText:'Мәтінді енгізіңіз',
     names:{ caesar:'Цезарь шифры', vigenere:'Виженер шифры', bacon:'Бэкон шифры',
             atbash:'Атбаш шифры', gronsfeld:'Гронсфельд шифры',
-            polybius:'Полибий квадраты', playfair:'Плейфер шифры' },
+            polybius:'Полибий квадраты', playfair:'Плейфер шифры',
+            ascii:'ASCII кестесі', koi8:'KOI8 код беті', morse:'Морзе әліпбиі' },
     descs:{
       caesar:   'Әр әріп алфавитте N орынға жылжытылады. 3 ығысу: А→Д, Ә→Е. Кілт — бүтін сан. Таңдалған алфавиттен тыс таңбалар өзгеріссіз өтеді.',
       vigenere: 'Кілттік сөз әр әріпке ығысу мәнін береді. Кілт әрпі А=0, Ә=1, Б=2 т.б. Кілт таңдалған алфавит әріптерінен тұруы тиіс және дөңгелек бойынша қайталанады.',
@@ -310,7 +319,10 @@ const T = {
       atbash:   'Бірінші әріп соңғысымен, екінші екінші соңғысымен ауыстырылады. Кілт қажет емес. Шифр симметриялы: сол батырма шифрлайды да, шешеді де.',
       gronsfeld:'Виженер шифрі сияқты, бірақ кілт — 0-9 сандар жолы. Әр сан тиісті әріптің ығысуын анықтайды. Кілт қайталанады.',
       polybius: 'Әріптер кестеге орналасады (орысша 6×6, ағылшынша 5×5, қазақша 7×6). Әр әріп екі санмен кодталады: қатар және баған. Мыс. А=11. Шешу үшін сандар тізбегін енгізіңіз.',
-      playfair: 'Кілттік сөз кесте құрады. Мәтін жұптарға бөлінеді: бір қатар → оңға ығысу; бір баған → төмен ығысу; тіктөртбұрыш → бағандармен алмасу. Орысша: Ё, Ъ, Й жоқ. Ағылшынша: I=J.'
+      playfair: 'Кілттік сөз кесте құрады. Мәтін жұптарға бөлінеді: бір қатар → оңға ығысу; бір баған → төмен ығысу; тіктөртбұрыш → бағандармен алмасу. Орысша: Ё, Ъ, Й жоқ. Ағылшынша: I=J.',
+      ascii:    'Әр таңба Unicode ондық санына айналады (Latin және стандартты таңбалар үшін ASCII-мен үйлесімді). Кодтау: мәтін → бос орынмен бөлінген сандар. Декодтау: сандар → мәтін.',
+      koi8:     'KOI8-R — кирилл әріптерінің кеңестік кодтауы (RFC 1489). Орыс әріптері 0xC0–0xFF байттарын алады. Басқа таңбалар ASCII ретінде кодталады. Нәтиже hex форматында шығады.',
+      morse:    'Әр әріп пен сан нүктелер (·) мен сызықшалармен (–) кодталады. Таңбалар бос орынмен, сөздер / белгісімен бөлінеді. RU/KZ — орыс Морзе кестесі, EN — халықаралық латын кестесі.'
     }
   }
 };
@@ -422,6 +434,61 @@ const pfOp = (t,kw,l,d) => {
 const playfairE = (t,k,l) => pfOp(t,k,l,1);
 const playfairD = (t,k,l) => pfOp(t,k,l,-1);
 
+// ASCII (Unicode codepoints, decimal)
+const asciiE = t => [...t].map(c=>c.codePointAt(0)).join(' ');
+const asciiD = t => t.trim().split(/\s+/).map(n=>{const c=parseInt(n);return isNaN(c)?'?':String.fromCodePoint(c);}).join('');
+
+// KOI8-R
+const KOI8_RU = 'ЮАБЦДЕФГХИЙКЛМНОПЯРСТУЖВЬЫЗШЭЩЧЪюабцдефгхийклмнопярстужвьызшэщчъ';
+const KOI8_BASE = 0xC0;
+const koi8E = t => [...t].map(ch=>{
+  const i=KOI8_RU.indexOf(ch);
+  if(i>=0) return (KOI8_BASE+i).toString(16).toUpperCase().padStart(2,'0');
+  const code=ch.codePointAt(0);
+  return code<256 ? code.toString(16).toUpperCase().padStart(2,'0') : '3F';
+}).join(' ');
+const koi8D = t => t.trim().split(/\s+/).map(h=>{
+  const code=parseInt(h,16); if(isNaN(code))return'?';
+  if(code>=KOI8_BASE&&code<KOI8_BASE+KOI8_RU.length)return KOI8_RU[code-KOI8_BASE];
+  return code<128?String.fromCharCode(code):'?';
+}).join('');
+
+// Morse
+const MORSE_EN = {
+  'A':'·–','B':'–···','C':'–·–·','D':'–··','E':'·','F':'··–·','G':'––·',
+  'H':'····','I':'··','J':'·–––','K':'–·–','L':'·–··','M':'––','N':'–·',
+  'O':'–––','P':'·––·','Q':'––·–','R':'·–·','S':'···','T':'–','U':'··–',
+  'V':'···–','W':'·––','X':'–··–','Y':'–·––','Z':'––··',
+  '0':'–––––','1':'·––––','2':'··–––','3':'···––','4':'····–','5':'·····',
+  '6':'–····','7':'––···','8':'–––··','9':'––––·'
+};
+const MORSE_RU = {
+  'А':'·–','Б':'–···','В':'·––','Г':'––·','Д':'–··','Е':'·','Ж':'···–',
+  'З':'––··','И':'··','Й':'·–––','К':'–·–','Л':'·–··','М':'––','Н':'–·',
+  'О':'–––','П':'·––·','Р':'·–·','С':'···','Т':'–','У':'··–','Ф':'··–·',
+  'Х':'····','Ц':'–·–·','Ч':'–––·','Ш':'––––','Щ':'––·–','Ъ':'·––·–',
+  'Ы':'–·––','Ь':'–··–','Э':'··–··','Ю':'··––','Я':'·–·–','Ё':'·',
+  '0':'–––––','1':'·––––','2':'··–––','3':'···––','4':'····–','5':'·····',
+  '6':'–····','7':'––···','8':'–––··','9':'––––·'
+};
+const morseE = (t,l) => {
+  const tbl = (l==='en') ? MORSE_EN : MORSE_RU;
+  return t.toUpperCase().split('').map(ch=>{
+    if(ch===' ')return'/';
+    return tbl[ch]||ch;
+  }).join(' ');
+};
+const morseRevEN = Object.fromEntries(Object.entries(MORSE_EN).map(([k,v])=>[v,k]));
+const morseRevRU = Object.fromEntries(Object.entries(MORSE_RU).filter(([k,v])=>k.trim()).map(([k,v])=>[v,k]));
+const morseD = (t,l) => {
+  const rev = (l==='en') ? morseRevEN : morseRevRU;
+  return t.split(' ').map(tok=>{
+    if(tok==='/')return' ';
+    if(tok==='')return'';
+    return rev[tok]||'?';
+  }).join('');
+};
+
 // ─── Run ─────────────────────────────────────────────────────────────────────
 const $  = id => document.getElementById(id);
 const kw = () => $('in-kw').value.trim();
@@ -449,7 +516,10 @@ function run(mode){
     gronsfeld: [()=>gronsfeldE(t,dg(),l),()=>gronsfeldD(t,dg(),l)],
     bacon:     [()=>baconE(t,l),      ()=>baconD(t,l)],
     polybius:  [()=>polyE(t,l),       ()=>polyD(t,l)],
-    playfair:  [()=>playfairE(t,kw(),l),()=>playfairD(t,kw(),l)]
+    playfair:  [()=>playfairE(t,kw(),l),()=>playfairD(t,kw(),l)],
+    ascii:     [()=>asciiE(t),        ()=>asciiD(t)],
+    koi8:      [()=>koi8E(t),         ()=>koi8D(t)],
+    morse:     [()=>morseE(t,l),      ()=>morseD(t,l)]
   };
   setOut(map[cipher][mode==='enc'?0:1]());
 }
@@ -490,6 +560,12 @@ function updateCipherPanel(){
   gs.style.display = cipher==='caesar'    ? '':'none';
   gk.style.display = ['vigenere','playfair'].includes(cipher) ? '':'none';
   gd.style.display = cipher==='gronsfeld' ? '':'none';
+  // lang selector not relevant for ascii/koi8
+  const langLabel = document.querySelector('.ui-langs span');
+  const langBtns  = document.querySelectorAll('.ui-langs button');
+  const hideLang  = ['ascii','koi8'].includes(cipher);
+  if(langLabel) langLabel.style.opacity = hideLang ? '0.3' : '1';
+  langBtns.forEach(b=>{ b.style.opacity = hideLang?'0.3':'1'; b.style.pointerEvents = hideLang?'none':''; });
   setErr('');
 }
 
